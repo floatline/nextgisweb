@@ -45,7 +45,7 @@ function scanForEntrypoints(pkg) {
                 tags: ["entrypoint"],
             });
             for (const { title } of payload.tags) {
-                if (title == "entrypoint") {
+                if (title === "entrypoint") {
                     // console.log(`@entrypoint tag was found in "${pkg.name}/${candidate}"`);
                     result.push(candidate);
                     break;
@@ -103,13 +103,13 @@ function scanLocales(moduleName) {
     const result = {};
     const pat = path.join(require.resolve(moduleName), "..", "locale", "*.js");
     for (const filename of glob.sync(pat)) {
-        const m = filename.match(/\/([a-z]{2}(?:[\-_][a-z]{2})?)\.js$/i);
+        const m = filename.match(/\/([a-z]{2}(?:[-_][a-z]{2})?)\.js$/i);
         if (m) {
             const original = m[1];
             const key = original.replace('_', '-').toLowerCase();
             result[key] = {key, original, filename};
-        };
-    };
+        }
+    }
     return result;
 }
 
@@ -126,7 +126,7 @@ function lookupLocale(key, map) {
     } else {
         const cfl = DEFAULT_COUNTRY_FOR_LANGUAGE[lang];
         test.push(cfl ? `${lang}-${cfl}` : `${lang}-${lang}`);
-    };
+    }
 
     test.push(lang);
 
@@ -135,9 +135,9 @@ function lookupLocale(key, map) {
         if (m) { return m; }
     }
 
-    if (key != 'en') {
+    if (key !== 'en') {
         return lookupLocale('en', map);
-    };
+    }
 
     throw "Locale 'en' not found!";
 }
@@ -182,7 +182,7 @@ for (const [comp, dir] of config.iconSources) {
     for (let fn of glob.sync(`${realDir}/**/*.svg`)) {
         const id = ("icon-" + comp + "-" +
             path.relative(realDir, fn).replace(/\.svg$/, "")
-        ).replace(/\w+\-resource\/(\w+)/, (m, p) => `rescls-${p}`);
+        ).replace(/\w+-resource\/(\w+)/, (m, p) => `rescls-${p}`);
         spriteCode = spriteCode + `import "${fn}";\n`;
         sharedIconIds[fs.realpathSync(fn)] = id;
     }
@@ -191,7 +191,7 @@ for (const [comp, dir] of config.iconSources) {
     for (const fn of glob.sync(`${realDir}/material.json`)) {
         const body = JSON.parse(fs.readFileSync(fn));
         for (let ref of body) {
-            if (ref.match(/\w+/)) { ref = ref + '/baseline' };
+            if (ref.match(/\w+/)) { ref = ref + '/baseline' }
             spriteCode = spriteCode + `import "${materialBase}/${ref}.svg";\n`;
         }
     }
@@ -211,13 +211,13 @@ const svgSpriteLoader = {
         runtimeGenerator: require.resolve('./icon-runtime.cjs'),
         symbolId: (fn) => {
             const shared = sharedIconIds[fn];
-            if (shared) { return shared };
+            if (shared) { return shared }
             return iconSymbolId(fn);
         }
     }
 };
 
-module.exports = (env, argv) => ({
+module.exports = (env) => ({
     mode: config.debug ? "development" : "production",
     devtool: config.debug ? "source-map" : false,
     bail: !env.WEBPACK_WATCH,
