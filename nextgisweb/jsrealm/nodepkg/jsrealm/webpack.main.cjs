@@ -252,6 +252,7 @@ module.exports = (env) => ({
         ]),
     },
     resolve: {
+        extensions: [".ts", "..."],
         plugins: [
             new IconResolverPlugin({ shared: spriteModuleFile }),
         ],
