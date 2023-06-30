@@ -1,9 +1,7 @@
-import json
+from pathlib import Path
 
 from nextgisweb.env import Component
 from nextgisweb.lib.config import Option
-
-from .util import disable_logging
 
 
 class AuditComponent(Component):
@@ -12,31 +10,24 @@ class AuditComponent(Component):
     def initialize(self):
         self.audit_enabled = self.options['enabled']
 
-        self.audit_es_host = self.options.get('elasticsearch.host', None)
-        self.audit_es_port = self.options['elasticsearch.port']
-        self.audit_es_index_prefix = self.options['elasticsearch.index.prefix']
-        self.audit_es_index_suffix = self.options['elasticsearch.index.suffix']
-
         self.audit_file = self.options.get('file', None)
 
-        if self.audit_enabled and (
-            self.audit_es_host is None and self.audit_file is None
-        ):
-            raise ValueError("Elasticsearch or file not specified for audit.")
+        self.audit_es_enabled = False
+        self.file_enabled = self.audit_enabled and self.audit_file is not None
+        self.intdb_enabled = self.options['intdb.enabled']
 
-        self.audit_es_enabled = self.audit_enabled and self.audit_es_host is not None
-        self.audit_file_enabled = self.audit_enabled and self.audit_file is not None
-
-        if self.audit_es_enabled:
-            from elasticsearch import Elasticsearch  # Slow import
-
-            self.es = Elasticsearch('%s:%d' % (
-                self.audit_es_host,
-                self.audit_es_port,
-            ))
-
-        if self.audit_file_enabled:
+        if self.file_enabled:
             self.file = open(self.options['file'], 'a')
+
+        if self.intdb_enabled:
+            from .intdb.sink import Sink
+            core = self.env.core
+            core.mksdir(self)
+
+            self.intdb_sink_path = Path(core.gtsdir(self) + '/sink')
+            self.intdb_storage_path = Path(core.gtsdir(self) + '/duckdb')
+            # os.mkdir(self.intdb_sink_path)
+            self.intdb_sink = Sink(self.intdb_sink_path)
 
         # Setup filters from options
         self.request_filters = request_filters = []
@@ -69,39 +60,19 @@ class AuditComponent(Component):
                 request_filters.append(
                     lambda req: not req.path_info.startswith(f_path_exc))
 
-    def is_service_ready(self):
-        if self.audit_es_enabled:
-            import elasticsearch.exceptions as esexc  # Slow import
-
-            while True:
-                try:
-                    with disable_logging():
-                        self.es.cluster.health(
-                            wait_for_status='yellow',
-                            request_timeout=1 / 4)
-                    break
-                except (esexc.ConnectionError, esexc.ConnectionTimeout) as exc:
-                    yield exc.info.message
-
-    def initialize_db(self):
-        if self.audit_es_enabled:
-            # OOPS: Elasticsearch mappings are not related to database!
-            template = json.loads(self.resource_path('template.json').read_text())
-            template['index_patterns'] = ['%s-*' % (self.audit_es_index_prefix,)]
-            self.es.indices.put_template('nextgisweb_audit', body=template)
-
     def setup_pyramid(self, config):
         from . import api, view
         api.setup_pyramid(self, config)
         view.setup_pyramid(self, config)
 
     option_annotations = (
-        Option('enabled', bool, default=False),
+        Option('enabled', bool, default=True),
         Option('elasticsearch.host'),
         Option('elasticsearch.port', int, default=9200),
         Option('elasticsearch.index.prefix', default='nextgisweb-audit'),
         Option('elasticsearch.index.suffix', default='%Y.%m'),
         Option('file', doc='Log events in ndjson format'),
+        Option('intdb.enabled', bool, default=True),
 
         Option('request_method.include', list, default=None,
                doc="Log only given request methods"),

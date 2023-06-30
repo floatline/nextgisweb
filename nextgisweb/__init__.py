@@ -2,6 +2,8 @@ import logging
 import os
 import time
 
+import duckdb
+
 from nextgisweb.env import Env
 from nextgisweb.env.package import single_component
 from nextgisweb.lib.config import load_config

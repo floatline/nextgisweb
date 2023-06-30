@@ -8,6 +8,8 @@ from nextgisweb.pyramid import viewargs
 
 from .api import audit_cget
 from .util import _, audit_context, es_index
+from .intdb.storage import Storage
+
 
 PAGE_SIZE = 20
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
@@ -95,19 +97,18 @@ def setup_pyramid(comp, config):
             'nextgisweb.audit.util.audit_tween_factory',
             over=('nextgisweb.pyramid.exception.unhandled_exception_tween_factory', ))
 
-        if comp.audit_es_enabled:
-            config.add_route(
-                'audit.control_panel.journal.browse',
-                '/control-panel/journal/'
-            ).add_view(journal_browse)
+        config.add_route(
+            'audit.control_panel.journal.browse',
+            '/control-panel/journal/'
+        ).add_view(journal_browse)
 
-            config.add_route(
-                'audit.control_panel.journal.show',
-                '/control-panel/journal/{id}'
-            ).add_view(journal_show)
+        config.add_route(
+            'audit.control_panel.journal.show',
+            '/control-panel/journal/{id}'
+        ).add_view(journal_show)
 
-            comp.env.pyramid.control_panel.add(
-                dm.Label('audit', _("Audit")),
-                dm.Link('audit/journal', _("Journal"), lambda args: (
-                    args.request.route_url('audit.control_panel.journal.browse'))),
-            )
+        comp.env.pyramid.control_panel.add(
+            dm.Label('audit', _("Audit")),
+            dm.Link('audit/journal', _("Journal"), lambda args: (
+                args.request.route_url('audit.control_panel.journal.browse'))),
+        )
