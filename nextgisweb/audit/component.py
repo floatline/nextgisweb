@@ -3,33 +3,28 @@ from pathlib import Path
 from nextgisweb.env import Component
 from nextgisweb.lib.config import Option
 
+from .model import Base
+from .database import DatabaseMixin
 
-class AuditComponent(Component):
+
+class AuditComponent(DatabaseMixin, Component):
     identity = 'audit'
+    metadata = Base.metadata
 
     def initialize(self):
+        super().initialize()
+
         self.audit_enabled = self.options['enabled']
 
         self.audit_file = self.options.get('file', None)
 
-        self.audit_es_enabled = False
         self.file_enabled = self.audit_enabled and self.audit_file is not None
-        self.intdb_enabled = self.options['intdb.enabled']
+        # self.database_enabled = self.options['database']
 
         if self.file_enabled:
             self.file = open(self.options['file'], 'a')
 
-        if self.intdb_enabled:
-            from .intdb.sink import Sink
-            core = self.env.core
-            core.mksdir(self)
-
-            self.intdb_sink_path = Path(core.gtsdir(self) + '/sink')
-            self.intdb_storage_path = Path(core.gtsdir(self) + '/duckdb')
-            # os.mkdir(self.intdb_sink_path)
-            self.intdb_sink = Sink(self.intdb_sink_path)
-
-        # Setup filters from options
+        # # Setup filters from options
         self.request_filters = request_filters = []
 
         if self.audit_enabled:
@@ -67,12 +62,8 @@ class AuditComponent(Component):
 
     option_annotations = (
         Option('enabled', bool, default=True),
-        Option('elasticsearch.host'),
-        Option('elasticsearch.port', int, default=9200),
-        Option('elasticsearch.index.prefix', default='nextgisweb-audit'),
-        Option('elasticsearch.index.suffix', default='%Y.%m'),
         Option('file', doc='Log events in ndjson format'),
-        Option('intdb.enabled', bool, default=True),
+        Option('database.enabled', bool, default=True),
 
         Option('request_method.include', list, default=None,
                doc="Log only given request methods"),

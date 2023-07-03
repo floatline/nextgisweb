@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 from time import monotonic
 
-import duckdb
 from sortedcontainers import SortedListWithKey
 
 from nextgisweb.lib.logging import logger

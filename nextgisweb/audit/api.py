@@ -2,58 +2,45 @@ import csv
 from io import StringIO
 from math import ceil
 
+import sqlalchemy as sa
+import sqlalchemy.dialects.postgresql as pg
 from flatdict import FlatDict
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.response import Response
+from sqlalchemy import func
+
+from nextgisweb.env import DBSession
+
+from nextgisweb.pyramid import JSONType
+
+from .model import tab_log
 
 
-from .intdb.storage import Storage
+def audit_cget(request) -> JSONType:
+    def _extract(pth):
+        return tab_log.c.data.op('#>>')(sa.text("'{" + ','.join(pth.split('.')) + "}'"))
 
+    q = sa.select(
+        tab_log.c.tstamp,
+        _extract('user.display_name').label('user_id'),
+        _extract('request.method').label('request_method'),
+    )
 
-def audit_cget(
-    request, date_from=None, date_to=None, user=None, order='desc', limit=None
-):
-    storage = Storage(request.env.audit.intdb_storage_path, read_only=True)
-    storage.fetch()
+    if before := request.GET.get('before'):
+        q = q.where(tab_log.c.tstamp < before)
 
-    # from elasticsearch_dsl import Q, Search
+    if after := request.GET.get('after'):
+        q = q.where(tab_log.c.tstamp >= after)
 
-    # s = Search(
-    #     using=request.env.audit.es,
-    #     index="%s-*" % (request.env.audit.audit_es_index_prefix,)
-    # )
-    # s = s.using(request.env.audit.es)
-    # s = s.sort('%s%s' % ({'asc': '', 'desc': '-'}[order], '@timestamp'))
+    if limit := request.GET.get('limit'):
+        q = q.limit(int(limit))
 
-    # if user is not None and user != '__all':
-    #     if user == '__non_empty':
-    #         s = s.query(Q('exists', **{'field': 'user.keyname'}))
-    #     else:
-    #         s = s.query(Q('term', **{'user.keyname': user}))
+    q = q.order_by(tab_log.c.tstamp.asc())
 
-    # if date_from is None and date_to is None:
-    #     return []
-
-    # if date_from is not None and date_from != '':
-    #     s = s.query(Q('range', **{'@timestamp': {'gte': date_from}}))
-
-    # if date_to is not None and date_to != '':
-    #     s = s.query(Q('range', **{'@timestamp': {'lte': date_to}}))
-
-    # def hits(chunk_size=100, limit=None):
-    #     response = s.execute()
-    #     total = response.hits.total.value
-
-    #     if limit is not None:
-    #         total = min(total, limit)
-    #         chunk_size = min(chunk_size, limit)
-
-    #     nchunks = int(ceil(total / chunk_size))
-    #     for nchunk in range(nchunks):
-    #         for hit in s[nchunk * chunk_size:(nchunk + 1) * chunk_size]:
-    #             yield hit
-
-    # return hits(limit=limit)
+    return [
+        dict(tstamp=r['tstamp'], request_method=r['request_method'], user_id=r['user_id'])
+        for r in DBSession.execute(q)
+    ]
 
 
 def export(request):
@@ -110,7 +97,9 @@ def export(request):
 
 
 def setup_pyramid(comp, config):
-    if comp.audit_es_enabled:
+    config.add_route('audit.query', '/api/component/audit/query').add_view(audit_cget)
+
+    if False and comp.audit_es_enabled:
         config.add_route(
             'audit.export', '/api/component/audit/export') \
             .add_view(export, request_method='GET')

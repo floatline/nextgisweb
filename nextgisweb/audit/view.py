@@ -15,9 +15,18 @@ PAGE_SIZE = 20
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 
 
-@viewargs(renderer='browse.mako')
+@viewargs(renderer='react')
 def journal_browse(request):
     request.require_administrator()
+
+
+    return dict(
+        title=_("Journal"),
+        entrypoint='@nextgisweb/audit/journal',
+        dynmenu=request.env.pyramid.control_panel,
+        maxwidth=True, maxheight=True)
+
+
 
     date_from = request.params.get("date_from", "")
     date_to = request.params.get("date_to", "")

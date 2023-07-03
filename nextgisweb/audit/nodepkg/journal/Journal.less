@@ -1,0 +1,26 @@
+.ngw-audit-journal {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    & > .head {
+        flex-grow: 0;
+    }
+
+    & > .table {
+        flex-grow: 1;
+        overflow: scroll;
+
+        table {
+            th {
+                background-color: var(--header-bg);
+                position: sticky;
+                top: 0;
+            }
+            td,
+            th {
+                border-top: 1px solid var(--divider-color);
+            }
+            width: 100%;
+        }
+    }
+}

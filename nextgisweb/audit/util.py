@@ -4,12 +4,15 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import zope.event
+import transaction
+from zope.sqlalchemy import mark_changed
 
-from nextgisweb.env import env, inject
+from nextgisweb.env import env, inject, DBSession
 from nextgisweb.lib.i18n import trstr_factory
 from nextgisweb.lib.json import dumps
 
 from .component import AuditComponent
+from .model import tab_log
 
 COMP_ID = 'audit'
 _ = trstr_factory(COMP_ID)
@@ -57,6 +60,9 @@ def audit_tween_factory(handler, registry, *, comp: AuditComponent):
             if ignore:
                 break
 
+        if not ignore and comp.database_enabled:
+            database_con = comp.database_engine.connect()
+
         response = handler(request)
 
         if not ignore:
@@ -101,8 +107,19 @@ def audit_tween_factory(handler, registry, *, comp: AuditComponent):
             if comp.file_enabled:
                 print(data, file=comp.file)
                 comp.file.flush()
-            if comp.intdb_enabled:
-                comp.intdb_sink.write(timestamp, data)
+            if comp.database_enabled:
+                database_con.execute(tab_log.insert().values(
+                    tstamp=timestamp,
+                    request_method=request.method,
+                    request_path=request.path,
+                    request_remote_addr=request.remote_addr,
+                    user_id=user['id'] if user else None,
+                    user_display_name=user['display_name'] if user else None,
+                    data=event.body,
+                ))
+                database_con.close()
+
+                # comp.intdb_sink.write(timestamp, data)
 
         return response
 
