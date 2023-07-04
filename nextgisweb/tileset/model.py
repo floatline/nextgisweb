@@ -60,7 +60,7 @@ class RenderRequest:
         self.srs = srs
 
     def render_extent(self, extent, size):
-        zoom = render_zoom(self.srs, extent, size, self.style.tilesize)
+        zoom = render_zoom(self.srs, extent, size, tilesize)
         zoom = min(max(zoom, self.style.minzoom), self.style.maxzoom)
         return self.style.render_image(extent, size, self.srs, zoom)
 
@@ -177,7 +177,7 @@ class _source_attr(SerializedProperty):
 
     def setter(self, srlzr, value):
         fn, fn_meta = env.file_upload.get_filename(value['id'])
-
+        #fn = '/opt/ngw/package/test.mbtiles'
         stat = dict()
         with NamedTemporaryFile() as tf:
             with sqlite3.connect(tf.name) as connection:
