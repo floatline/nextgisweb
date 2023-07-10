@@ -8,7 +8,7 @@ from osgeo import ogr, osr
 from PIL import Image
 from zope.interface import implementer
 
-from nextgisweb.env import _, COMP_ID, declarative_base, env
+from nextgisweb.env import _, Base, COMP_ID, env
 from nextgisweb.lib import db
 from nextgisweb.lib.osrhelper import sr_from_epsg
 
@@ -43,7 +43,7 @@ def transform_extent(extent, src_osr, dst_osr):
     return transform_point(*extent[0:2]) + transform_point(*extent[2:4])
 
 
-Base = declarative_base(dependencies=('resource', ))
+Base.depends_on('resource')
 
 tilesize = 256
 
@@ -267,7 +267,3 @@ class TilesetSerializer(Serializer):
 
     srs = SerializedRelationship(read=DataStructureScope.read, write=DataStructureScope.write)
     source = _source_attr(write=DataScope.write)
-
-    def deserialize(self):
-        self.data['srs'] = dict(id=3857)
-        super().deserialize()

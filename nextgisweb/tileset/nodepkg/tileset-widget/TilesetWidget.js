@@ -1,22 +1,27 @@
 import { observer } from "mobx-react-lite";
-import i18n from "@nextgisweb/pyramid/i18n!tileset";
-import { Button, Tabs, Modal, Upload, Checkbox } from "@nextgisweb/gui/antd";
-import { useFileUploader } from "@nextgisweb/file-upload";
 
-export const TilesetWidget = observer(({}) => {
-    const onChange = (a,b,c) => {
-        console.log('onchange!')
-        console.log(a,b,c)
-    };
-    const { props } = useFileUploader({
-        openFileDialogOnClick: true,
-        onChange,
-        multiple: false,
-    });
+import { FileUploader } from "@nextgisweb/file-upload/file-uploader";
+
+import i18n from "@nextgisweb/pyramid/i18n!tileset";
+
+const uploaderMessages = {
+    uploadText: i18n.gettext("Select a dataset"),
+    helpText: i18n.gettext("Dataset should be in MBTiles format."),
+}
+
+export const TilesetWidget = observer(({ store }) => {
     return (
         <div>
-            <Upload {...props}>
-            </Upload>
+            <FileUploader
+                onChange={(value) => {
+                    store.source = value;
+                }}
+                onUploading={(value) => {
+                    store.uploading = value;
+                }}
+                showMaxSize
+                {...uploaderMessages}
+            />
         </div>
     );
 });
