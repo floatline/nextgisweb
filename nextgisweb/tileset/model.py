@@ -175,6 +175,10 @@ def read_file(fn):
             else:
                 if row is None:
                     raise ValidationError(message="Table \"tiles\" is empty.")
+                try:
+                    Image.open(BytesIO(row[3]))
+                except IOError:
+                    raise ValidationError(message=_("Unsupported data format."))
 
                 for z, x, y, data in cursor.execute(sql_tiles):
                     yield z, x, toggle_tms_xyz_y(z, y), data
