@@ -1,8 +1,10 @@
 import os
+import re
 import sqlite3
 from io import BytesIO
 from shutil import copyfile
 from tempfile import NamedTemporaryFile
+from zipfile import ZipFile, is_zipfile
 
 from osgeo import ogr, osr
 from PIL import Image
@@ -146,6 +148,18 @@ class Tileset(Base, Resource, SpatialLayerMixin):
 
 
 def read_file(fn):
+    if is_zipfile(fn):
+        pattern = re.compile('^(.*\/)?(\d+)\/(\d+)\/(\d+)\.(png|jpe?g)$', re.IGNORECASE)
+        with ZipFile(fn) as zf:
+            for info in zf.infolist():
+                if not info.is_dir() and (match := pattern.match(info.filename)):
+                    z = int(match.group(2))
+                    x = int(match.group(3))
+                    y = int(match.group(4))
+                    data = zf.read(info)
+                    yield z, x, y, data
+        return
+
     try:
         connection = sqlite3.connect(f'file:{fn}?mode=ro', uri=True)
     except sqlite3.OperationalError:
@@ -177,7 +191,6 @@ class _source_attr(SerializedProperty):
 
     def setter(self, srlzr, value):
         fn, fn_meta = env.file_upload.get_filename(value['id'])
-        #fn = '/opt/ngw/package/test.mbtiles'
         stat = dict()
         with NamedTemporaryFile() as tf:
             with sqlite3.connect(tf.name) as connection:

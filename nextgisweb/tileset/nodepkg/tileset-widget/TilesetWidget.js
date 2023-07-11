@@ -6,7 +6,7 @@ import i18n from "@nextgisweb/pyramid/i18n!tileset";
 
 const uploaderMessages = {
     uploadText: i18n.gettext("Select a dataset"),
-    helpText: i18n.gettext("Dataset should be in MBTiles format."),
+    helpText: i18n.gettext("MBTiles and ZIP formats are supported."),
 }
 
 export const TilesetWidget = observer(({ store }) => {
