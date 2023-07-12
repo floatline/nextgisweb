@@ -173,12 +173,11 @@ def read_file(fn):
             except sqlite3.OperationalError:
                 pass
             else:
-                if row is None:
-                    raise ValidationError(message="Table \"tiles\" is empty.")
-                try:
-                    Image.open(BytesIO(row[3]))
-                except IOError:
-                    raise ValidationError(message=_("Unsupported data format."))
+                if row is not None:
+                    try:
+                        Image.open(BytesIO(row[3]))
+                    except IOError:
+                        raise ValidationError(message=_("Unsupported data format."))
 
                 for z, x, y, data in cursor.execute(sql_tiles):
                     yield z, x, toggle_tms_xyz_y(z, y), data
@@ -194,6 +193,15 @@ def read_file(fn):
 class _source_attr(SerializedProperty):
 
     def setter(self, srlzr, value):
+        if srlzr.obj.id is None:
+            srlzr.obj.fileobj = env.file_storage.fileobj(component=COMP_ID)
+            dstfile = env.file_storage.filename(srlzr.obj.fileobj, makedirs=True)
+        else:
+            dstfile = env.file_storage.filename(srlzr.obj.fileobj)
+            size = os.stat(dstfile).st_size
+            env.core.reserve_storage(
+                COMP_ID, TilesetData, value_data_volume=-size, resource=srlzr.obj)
+
         fn, fn_meta = env.file_upload.get_filename(value['id'])
         stat = dict()
         with NamedTemporaryFile() as tf:
@@ -233,11 +241,12 @@ class _source_attr(SerializedProperty):
                         elif y > stat_zoom[3]:
                             stat_zoom[3] = y
 
+                if len(stat) == 0:
+                    raise ValidationError(message=_("No tiles found in source."))
+
                 connection.commit()
                 cursor.execute('VACUUM')
 
-            srlzr.obj.fileobj = env.file_storage.fileobj(component=COMP_ID)
-            dstfile = env.file_storage.filename(srlzr.obj.fileobj, makedirs=True)
             copyfile(tf.name, dstfile)
 
             size = os.stat(dstfile).st_size

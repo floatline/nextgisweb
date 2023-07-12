@@ -2,7 +2,7 @@ import { observer } from "mobx-react-lite";
 
 import { FileUploader } from "@nextgisweb/file-upload/file-uploader";
 
-import i18n from "@nextgisweb/pyramid/i18n!tileset";
+import i18n from "@nextgisweb/pyramid/i18n";
 
 const uploaderMessages = {
     uploadText: i18n.gettext("Select a dataset"),

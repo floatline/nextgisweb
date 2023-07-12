@@ -14,6 +14,8 @@ export class TilesetStore {
         this.operation = operation;
     }
 
+    load(value) {}
+
     dump({ lunkwill }) {
         const result = {};
 
@@ -22,14 +24,14 @@ export class TilesetStore {
             result.srs = srsSettings.default;
         }
 
-        lunkwill.suggest(this.operation === "create");
+        lunkwill.suggest(!!this.source);
 
         return toJS(result);
     }
 
     get isValid() {
         return (
-            this.operation === "update" || (!this.uploading && !!this.source)
+            !this.uploading && (this.operation === "update" || !!this.source)
         );
     }
 
