@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, is_zipfile
 
 from osgeo import ogr, osr
-from PIL import Image
+from PIL import Image, ImageStat
 from zope.interface import implementer
 
 from nextgisweb.env import _, Base, COMP_ID, env
@@ -30,7 +30,26 @@ from nextgisweb.resource import (
 )
 
 from nextgisweb.tmsclient.util import render_zoom, crop_box, toggle_tms_xyz_y
-from nextgisweb.render.util import imgcolor, pack_color, unpack_color
+from nextgisweb.render.util import pack_color, unpack_color
+
+
+def imgcolor(img):
+    extrema = ImageStat.Stat(img).extrema
+    rgba = img.mode == 'RGBA'
+
+    if rgba:
+        alpha = extrema[3]
+        if alpha[0] == 0 and alpha[1] == 0:
+            return (0, 0, 0, 0)
+
+    for comp in extrema:
+        if comp[0] != comp[1]:
+            return None
+
+    if not rgba:
+        extrema = ImageStat.Stat(img.convert('RGBA')).extrema
+
+    return [c[0] for c in extrema]
 
 
 def transform_extent(extent, src_osr, dst_osr):
