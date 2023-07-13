@@ -149,7 +149,7 @@ class Tileset(Base, Resource, SpatialLayerMixin):
 
 def read_file(fn):
     if is_zipfile(fn):
-        pattern = re.compile('^(.*\/)?(\d+)\/(\d+)\/(\d+)\.(png|jpe?g)$', re.IGNORECASE)
+        pattern = re.compile(r'^(.*/)?(\d+)/(\d+)/(\d+)\.(png|jpe?g)$', re.IGNORECASE)
         with ZipFile(fn) as zf:
             for info in zf.infolist():
                 if not info.is_dir() and (match := pattern.match(info.filename)):
