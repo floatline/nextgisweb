@@ -1,6 +1,7 @@
 import os
 import re
 import sqlite3
+from functools import lru_cache
 from io import BytesIO
 from shutil import copyfile
 from tempfile import NamedTemporaryFile
@@ -231,13 +232,15 @@ class _source_attr(SerializedProperty):
         with NamedTemporaryFile() as tf:
             with sqlite3.connect(tf.name) as connection:
                 cursor = connection.cursor()
+                cursor.execute('PRAGMA page_size = 8192')
+                cursor.execute('PRAGMA journal_mode = OFF')
                 cursor.execute('''
                     CREATE TABLE tile (
                         z INTEGER, x INTEGER, y INTEGER,
                         color INTEGER, data BLOB,
                         PRIMARY KEY (z, x, y),
                         CHECK ((color IS NULL) != (data IS NULL))
-                    )
+                    ) WITHOUT ROWID
                 ''')
 
                 for z, x, y, img_data in read_file(fn):
