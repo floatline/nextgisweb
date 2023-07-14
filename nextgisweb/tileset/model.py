@@ -93,6 +93,11 @@ class RenderRequest:
         return self.style.render_image(extent, (size, size), self.srs, zoom)
 
 
+@lru_cache(maxsize=32)
+def get_tile_db(db_path):
+    return sqlite3.connect(f'file:{db_path}?mode=ro', uri=True)
+
+
 @implementer(IRenderableStyle, IBboxLayer)
 class Tileset(Base, Resource, SpatialLayerMixin):
     identity = 'tileset'
@@ -128,28 +133,28 @@ class Tileset(Base, Resource, SpatialLayerMixin):
         image = None
 
         db_path = env.file_storage.filename(self.fileobj)
-        with sqlite3.connect(f'file:{db_path}?mode=ro', uri=True) as connection:
-            for x, y, color, data in connection.execute('''
-                SELECT x, y, color, data
-                FROM tile
-                WHERE z = ? AND (x BETWEEN ? AND ?) AND (y BETWEEN ? AND ?)
-            ''', (zoom, xtile_from, xtile_to, ytile_from, ytile_to)):
-                if color is not None:
-                    tile_image = Image.new('RGBA', (tilesize, tilesize), unpack_color(color))
-                else:
-                    tile_image = Image.open(BytesIO(data))
-                if image is None:
-                    image = Image.new('RGBA', (width, height))
-                image.paste(tile_image, ((x - xtile_from) * tilesize, (y - ytile_from) * tilesize))
+        connection = get_tile_db(db_path)
+        for x, y, color, data in connection.execute('''
+            SELECT x, y, color, data
+            FROM tile
+            WHERE z = ? AND (x BETWEEN ? AND ?) AND (y BETWEEN ? AND ?)
+        ''', (zoom, xtile_from, xtile_to, ytile_from, ytile_to)):
+            if color is not None:
+                tile_image = Image.new('RGBA', (tilesize, tilesize), unpack_color(color))
+            else:
+                tile_image = Image.open(BytesIO(data))
+            if image is None:
+                image = Image.new('RGBA', (width, height))
+            image.paste(tile_image, ((x - xtile_from) * tilesize, (y - ytile_from) * tilesize))
 
-            if image is not None:
-                a0x, a1y, a1x, a0y = self.srs.tile_extent((zoom, xtile_from, ytile_from))
-                b0x, b1y, b1x, b0y = self.srs.tile_extent((zoom, xtile_to, ytile_to))
-                box = crop_box((a0x, b1y, b1x, a0y), extent, width, height)
-                image = image.crop(box)
+        if image is not None:
+            a0x, a1y, a1x, a0y = self.srs.tile_extent((zoom, xtile_from, ytile_from))
+            b0x, b1y, b1x, b0y = self.srs.tile_extent((zoom, xtile_to, ytile_to))
+            box = crop_box((a0x, b1y, b1x, a0y), extent, width, height)
+            image = image.crop(box)
 
-                if image.size != size:
-                    image = image.resize(size)
+            if image.size != size:
+                image = image.resize(size)
 
         return image
 
