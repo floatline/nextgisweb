@@ -1,12 +1,10 @@
-const babelConfigPath = require.resolve('@nextgisweb/jsrealm/babelrc.cjs');
+const babelConfigPath = require.resolve("@nextgisweb/jsrealm/babelrc.cjs");
 
 module.exports = {
     root: true,
-    parser: '@typescript-eslint/parser',
     plugins: ["requirejs", "react"],
     extends: [
         "eslint:recommended",
-        'plugin:@typescript-eslint/recommended',
         "plugin:requirejs/recommended",
         "plugin:react/recommended",
         "plugin:react/jsx-runtime",
@@ -17,8 +15,8 @@ module.exports = {
         ngwConfig: "readonly",
     },
     rules: {
-        "eqeqeq": "error",
-        "indent": ["error", 4, { "SwitchCase": 1 }],
+        indent: ["error", 4, { SwitchCase: 1 }],
+        eqeqeq: "error",
         "no-unused-vars": ["error", { args: "after-used" }],
         "no-use-before-define": "error",
         "requirejs/no-object-define": "error",
@@ -59,15 +57,51 @@ module.exports = {
             },
         },
         {
+            files: ["*/*/nodepkg/**/*.ts", "*/*/nodepkg/**/*.tsx"],
+            parser: "@typescript-eslint/parser",
+            plugins: ["react", "@typescript-eslint", "prettier"],
+            extends: [
+                "eslint:recommended",
+                "plugin:@typescript-eslint/recommended",
+                "plugin:react/recommended",
+                "plugin:react/jsx-runtime",
+                "plugin:react-hooks/recommended",
+                "plugin:prettier/recommended",
+            ],
+            parserOptions: {
+                sourceType: "module",
+                jsx: true,
+                babelOptions: {
+                    configFile: babelConfigPath,
+                },
+            },
+            rules: {
+                "prettier/prettier": [
+                    "error",
+                    {
+                        tabWidth: 4,
+                        parser: "babel-ts",
+                    },
+                ],
+            },
+        },
+        {
             files: ["*/*/amd/**/*.js"],
+            plugins: ["requirejs"],
+            extends: ["eslint:recommended", "plugin:requirejs/recommended"],
             env: {
                 browser: true,
                 amd: true,
                 es2015: true,
             },
             rules: {
-                "eqeqeq": "off",
-            }
+                eqeqeq: "off",
+            },
         },
     ],
+    settings: {
+        react: {
+            version: "17",
+        },
+    },
 };
