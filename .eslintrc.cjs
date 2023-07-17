@@ -1,22 +1,23 @@
 const babelConfigPath = require.resolve("@nextgisweb/jsrealm/babelrc.cjs");
 
-module.exports = {
+/** @type {import("eslint").Linter.Config } */
+const config = {
     root: true,
-    plugins: ["requirejs", "react"],
+    plugins: ["requirejs", "react", "prettier"],
     extends: [
         "eslint:recommended",
         "plugin:requirejs/recommended",
         "plugin:react/recommended",
         "plugin:react/jsx-runtime",
         "plugin:react-hooks/recommended",
+        "plugin:prettier/recommended",
     ],
     globals: {
         dojoConfig: "readonly",
         ngwConfig: "readonly",
     },
     rules: {
-        indent: ["error", 4, { SwitchCase: 1 }],
-        eqeqeq: "error",
+        "eqeqeq": "error",
         "no-unused-vars": ["error", { args: "after-used" }],
         "no-use-before-define": "error",
         "requirejs/no-object-define": "error",
@@ -59,7 +60,7 @@ module.exports = {
         {
             files: ["*/*/nodepkg/**/*.ts", "*/*/nodepkg/**/*.tsx"],
             parser: "@typescript-eslint/parser",
-            plugins: ["react", "@typescript-eslint", "prettier"],
+            plugins: ["react", "@typescript-eslint"],
             extends: [
                 "eslint:recommended",
                 "plugin:@typescript-eslint/recommended",
@@ -74,15 +75,6 @@ module.exports = {
                 babelOptions: {
                     configFile: babelConfigPath,
                 },
-            },
-            rules: {
-                "prettier/prettier": [
-                    "error",
-                    {
-                        tabWidth: 4,
-                        parser: "babel-ts",
-                    },
-                ],
             },
         },
         {
@@ -105,3 +97,5 @@ module.exports = {
         },
     },
 };
+
+module.exports = config;

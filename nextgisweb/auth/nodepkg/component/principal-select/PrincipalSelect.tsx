@@ -114,7 +114,7 @@ export function PrincipalSelect({
                                     if (itm.system) {
                                         if (Array.isArray(systemUsers)) {
                                             return systemUsers.includes(
-                                                itm.keyname,
+                                                itm.keyname
                                             );
                                         }
                                         return !!systemUsers;
@@ -122,7 +122,7 @@ export function PrincipalSelect({
                                     return true;
                                 })
                                 .map((data) => ({ ...data, _user: true }));
-                        }),
+                        })
                 );
             }
             if (loadGroups) {
@@ -131,7 +131,7 @@ export function PrincipalSelect({
                         query: { brief: true },
                         signal: makeSignal(),
                         cache: true,
-                    }),
+                    })
                 );
             }
             return Promise.all(promises).then((members_) =>
@@ -140,7 +140,7 @@ export function PrincipalSelect({
                         return a.system ? -1 : 1;
                     }
                     return a.display_name > b.display_name ? 1 : -1;
-                }),
+                })
             );
         };
         loadData().then((choices_) => {
