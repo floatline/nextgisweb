@@ -1,12 +1,19 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useAbortController } from "@nextgisweb/pyramid/hook/useAbortController";
 import { fileUploader } from "@nextgisweb/file-upload";
 import { message } from "@nextgisweb/gui/antd";
-import i18n from "@nextgisweb/pyramid/i18n";
+import { useAbortController } from "@nextgisweb/pyramid/hook/useAbortController";
+
+import locale from "../locale";
+
+import type {
+    UploaderMeta,
+    FileUploaderOptions,
+    UploadProps,
+    UseFileUploaderProps,
+} from "../type";
 
 export function useFileUploader({
-    /** File types that can be accepted. See input accept {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#accept Attribute}  */
     accept,
     fileMeta: initMeta,
     multiple = false,
@@ -16,16 +23,16 @@ export function useFileUploader({
     showUploadList = false,
     openFileDialogOnClick = true,
     showProgressInDocTitle = false,
-}) {
+}: UseFileUploaderProps) {
     const { makeSignal, abort } = useAbortController();
 
     const [docTitle] = useState(document.title);
 
     const [fileList, setFileList] = useState([]);
 
-    const [progressText, setProgressText] = useState(null);
-    const [uploading, setUploading] = useState(false);
-    const [meta, setMeta] = useState(initMeta);
+    const [progressText, setProgressText] = useState<string | null>(null);
+    const [uploading, setUploading] = useState<boolean>(false);
+    const [meta, setMeta] = useState<UploaderMeta>(initMeta);
 
     useEffect(() => {
         if (setInitMeta) {
@@ -43,7 +50,7 @@ export function useFileUploader({
     const onProgress = useCallback(
         (evt) => {
             if (evt.type === "progress") {
-                setProgressText(evt.percent + i18n.gettext(" uploaded..."));
+                setProgressText(evt.percent + locale.progressText);
                 if (showProgressInDocTitle) {
                     document.title = evt.percent + " | " + docTitle;
                 }
@@ -53,7 +60,7 @@ export function useFileUploader({
     );
 
     const fileUploaderWrapper = useCallback(
-        (options) => {
+        (options: FileUploaderOptions) => {
             abort();
             return fileUploader({ ...options, signal: makeSignal() });
         },
@@ -70,7 +77,7 @@ export function useFileUploader({
                 });
                 uploadedFiles.forEach((f, i) => {
                     f._file = files[i];
-                })
+                });
                 if (multiple) {
                     setMeta(uploadedFiles.filter(Boolean));
                 } else {
@@ -91,7 +98,7 @@ export function useFileUploader({
 
     const { onChange: inputPropsOnChange, ...restInputProps } = inputProps;
 
-    const props = useMemo(
+    const props = useMemo<UploadProps>(
         () => ({
             name: "file",
             accept,

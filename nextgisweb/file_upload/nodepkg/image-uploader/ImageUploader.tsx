@@ -1,32 +1,39 @@
 import "./ImageUploader.less";
 
-import { PropTypes } from "prop-types";
-
 import { useState, useEffect } from "react";
 
 import DeleteIcon from "@material-icons/svg/delete";
 import { Button } from "@nextgisweb/gui/antd";
-import i18n from "@nextgisweb/pyramid/i18n";
 
 import { FileUploader } from "../file-uploader";
-import { FileUploaderType } from "../type/FileUploaderType";
+import locale from "./locale";
 
-const UPLOAD_TEXT = `${i18n.gettext("Select an image")}`;
+import type { FileUploaderProps, UploaderMeta } from "../file-uploader/type";
+import type { ImageUploaderProps } from "./type";
+import type { UploadFile } from "antd";
 
-export function ImageUploader({ inputProps, file, image, ...rest }) {
-    const [backgroundImage, setBackgroundImage] = useState(null);
-    const [chosenFile, setChosenFile] = useState();
-    const [fileMeta, setFileMeta] = useState();
+type OriginFileObj = UploadFile["originFileObj"];
+
+export function ImageUploader({
+    inputProps,
+    file,
+    image,
+    ...rest
+}: ImageUploaderProps) {
+    const [backgroundImage, setBackgroundImage] = useState<string>();
+    const [chosenFile, setChosenFile] = useState<OriginFileObj[]>();
+    const [fileMeta, setFileMeta] = useState<UploaderMeta>();
 
     const inputPropsOnChange = inputProps?.onChange;
 
     // for backward compatibility
     file = file ?? image;
-    const props = {
+    const height = 220;
+    const props: FileUploaderProps = {
         file,
-        height: "220px",
+        height,
         fileMeta,
-        uploadText: UPLOAD_TEXT,
+        uploadText: locale.imageUploadText,
         setFileMeta,
         inputProps: {
             name: "image",
@@ -51,8 +58,8 @@ export function ImageUploader({ inputProps, file, image, ...rest }) {
         setBackgroundImage(null);
     };
 
-    const readImage = (file_) => {
-        const f = Array.isArray(file_) ? file_[0] : file_
+    const readImage = (file_: File | File[]) => {
+        const f = Array.isArray(file_) ? file_[0] : file_;
         const reader = new FileReader();
         reader.onloadend = () => {
             setBackgroundImage(`url(${reader.result})`);
@@ -78,8 +85,8 @@ export function ImageUploader({ inputProps, file, image, ...rest }) {
                 <div
                     className="uploader__dropzone"
                     style={{
-                        height: props.height,
-                        backgroundImage: backgroundImage,
+                        height: height + "px",
+                        backgroundImage,
                         width: "100%",
                         position: "relative",
                     }}
@@ -96,7 +103,7 @@ export function ImageUploader({ inputProps, file, image, ...rest }) {
                         }}
                         onClick={() => clean()}
                     >
-                        {i18n.gettext("Delete")}
+                        {locale.deleteText}
                     </Button>
                 </div>
             </div>
@@ -105,13 +112,3 @@ export function ImageUploader({ inputProps, file, image, ...rest }) {
 
     return <>{backgroundImage ? <Preview /> : <FileUploader {...props} />}</>;
 }
-
-ImageUploader.propTypes = {
-    /**
-     * @deprecated - use file instead
-     */
-    image: PropTypes.object,
-    file: PropTypes.object,
-    height: PropTypes.string,
-    ...FileUploaderType,
-};

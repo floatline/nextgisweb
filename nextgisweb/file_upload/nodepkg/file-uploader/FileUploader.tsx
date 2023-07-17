@@ -4,34 +4,35 @@ import BackspaceIcon from "@material-icons/svg/backspace";
 import CancelIcon from "@material-icons/svg/cancel";
 import { Button, Upload } from "@nextgisweb/gui/antd";
 import { formatSize } from "@nextgisweb/gui/util/formatSize";
-import { useFileUploader } from "../hook/useFileUploader";
-import { FileUploaderType } from "../type/FileUploaderType";
+import { useFileUploader } from "./hook/useFileUploader";
 
-import i18n from "@nextgisweb/pyramid/i18n";
 import settings from "@nextgisweb/pyramid/settings!file_upload";
+
+import { FileUploaderProps } from "./type";
+import locale from "./locale";
 
 import "./FileUploader.less";
 
 const { Dragger } = Upload;
 
-const UPLOAD_TEXT = i18n.gettext("Select a file");
-const DND_TEXT = i18n.gettext("or drag and drop here");
-const MAX_SIZE = formatSize(settings.max_size) + " " + i18n.gettext("max");
+const UPLOAD_TEXT = locale.uploadText;
+const DND_TEXT = locale.dndText;
+const MAX_SIZE = formatSize(settings.max_size) + " " + locale.maxText;
 
 export function FileUploader({
-    helpText,
-    uploadText = UPLOAD_TEXT,
-    dragAndDropText = DND_TEXT,
-    onChange,
-    showProgressInDocTitle = true,
-    height = "220px",
     accept,
-    inputProps = {},
+    height = 220,
     fileMeta,
-    setFileMeta,
+    helpText,
+    onChange,
+    inputProps = {},
+    uploadText = UPLOAD_TEXT,
     onUploading,
+    setFileMeta,
     showMaxSize = false,
-}) {
+    dragAndDropText = DND_TEXT,
+    showProgressInDocTitle = true,
+}: FileUploaderProps) {
     const { abort, progressText, props, meta, setMeta, uploading } =
         useFileUploader({
             showProgressInDocTitle,
@@ -46,19 +47,21 @@ export function FileUploader({
         onUploading && onUploading(uploading);
     }, [uploading, onUploading]);
 
-    const InputText = () =>
-        meta ? (
+    const InputText = () => {
+        const firstMeta = Array.isArray(meta) ? meta[0] : meta;
+
+        return firstMeta ? (
             <>
                 <p className="ant-upload-text">
-                    {meta.name}{" "}
-                    <span className="size">{formatSize(meta.size)}</span>
+                    {firstMeta.name}{" "}
+                    <span className="size">{formatSize(firstMeta.size)}</span>
                     <Button
                         onClick={(e) => {
                             e.stopPropagation();
                             setMeta(null);
                         }}
                         type="link"
-                        icon={<BackspaceIcon/>}
+                        icon={<BackspaceIcon />}
                     />
                 </p>
             </>
@@ -72,6 +75,7 @@ export function FileUploader({
                 {showMaxSize && <p className="ant-upload-hint">{MAX_SIZE}</p>}
             </>
         );
+    };
 
     const ProgressText = () => (
         <div>
@@ -80,7 +84,7 @@ export function FileUploader({
             </span>
             <span>
                 <Button shape="round" icon={<CancelIcon />} onClick={abort}>
-                    {i18n.gettext("Stop")}
+                    {locale.stopText}
                 </Button>
             </span>
         </div>
@@ -98,5 +102,3 @@ export function FileUploader({
         </Dragger>
     );
 }
-
-FileUploader.propTypes = FileUploaderType;
