@@ -16,14 +16,14 @@ function PrincipalSelectTest() {
             {presets.map(([title, props]) => {
                 const propsCode = Object.entries(props)
                     .map(([k, v]) =>
-                        v === true ? k : k + "={" + JSON.stringify(v) + "}"
+                        v === true ? k : k + "={" + JSON.stringify(v) + "}",
                     )
                     .join(" ");
                 return (
                     <div key={title} style={{ marginBottom: "1em" }}>
                         <h4>{title}</h4>
                         <code>{`<PrincipalSelect ${propsCode}/>`}</code>
-                        <div style={{marginTop: "1ex"}}>
+                        <div style={{ marginTop: "1ex" }}>
                             <PrincipalSelect
                                 style={{ width: "40em" }}
                                 {...props}
