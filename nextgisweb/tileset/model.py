@@ -234,6 +234,7 @@ class _source_attr(SerializedProperty):
                 cursor = connection.cursor()
                 cursor.execute('PRAGMA page_size = 8192')
                 cursor.execute('PRAGMA journal_mode = OFF')
+                cursor.execute('PRAGMA synchronous = OFF')
                 cursor.execute('''
                     CREATE TABLE tile (
                         z INTEGER, x INTEGER, y INTEGER,
