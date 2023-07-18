@@ -8,6 +8,8 @@ import type {
     ResourceInterface,
 } from "../../type/Resource";
 
+export type SelectValue = number | number[];
+
 export type CardProps = Parameters<typeof Card>[0];
 export type ModalProps = Parameters<typeof Modal>[0];
 
@@ -27,7 +29,7 @@ export interface ResourcePickerChildrenProps {
 
 export interface ResourcePickerFooterProps {
     resourceStore: ResourcePickerStore;
-    onOk?: (val: number | number[]) => void;
+    onOk?: (val: SelectValue) => void;
 }
 
 export type OnNewGroupType = (resource) => void;
@@ -57,7 +59,7 @@ export interface ResourcePickerCardProps {
     pickerOptions?: ResourcePickerStoreOptions;
     cardOptions?: CardProps;
     showClose?: boolean;
-    onSelect?: (res: number | number[]) => void;
+    onSelect?: (res: SelectValue) => void;
     onClose?: () => void;
     store?: ResourcePickerStore;
 }
@@ -72,7 +74,7 @@ export interface UsePickerModalProps {
 export interface ResourcePickerModalProps extends UsePickerModalProps {
     visible?: boolean;
     store?: ResourcePickerStore;
-    onSelect?: (val: number | number[]) => void;
+    onSelect?: (val: SelectValue) => void;
     closeOnSelect?: boolean;
     pickerOptions?: ResourcePickerStoreOptions;
 }
