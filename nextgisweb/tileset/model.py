@@ -4,6 +4,7 @@ import sqlite3
 from functools import lru_cache
 from io import BytesIO
 from shutil import copyfile
+from typing import Optional
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, is_zipfile
 
@@ -14,6 +15,7 @@ from zope.interface import implementer
 from nextgisweb.env import _, Base, COMP_ID, env
 from nextgisweb.lib import db
 from nextgisweb.lib.osrhelper import sr_from_epsg
+from nextgisweb.lib.registry import list_registry
 
 from nextgisweb.core import KindOfData
 from nextgisweb.core.exception import ValidationError
@@ -172,15 +174,59 @@ class Tileset(Base, Resource, SpatialLayerMixin):
         )
 
 
+@list_registry
+class FileFormat:
+    pattern: re.Pattern
+    group_z: int
+    group_x: int
+    group_y: int
+    offset_z: Optional[int] = 0
+
+    def __init_subclass__(cls):
+        cls.pattern = re.compile(cls.pattern, re.IGNORECASE)
+
+    @classmethod
+    def get_tile(cls, filename):
+        if match := cls.pattern.match(filename):
+            return (
+                int(match[cls.group_z]) + cls.offset_z,
+                int(match[cls.group_x]),
+                int(match[cls.group_y]),
+            )
+
+
+class XYZ(FileFormat):
+    pattern = r'^(.*/)?(\d+)/(\d+)/(\d+)\.(png|jpe?g)$'
+    group_z = 2
+    group_x = 3
+    group_y = 4
+
+
+class SASPlanet(FileFormat):
+    pattern = r'^(.*/)?z(\d+)/\d+/x(\d+)/\d+/y(\d+)\.png$'
+    group_z = 2
+    group_x = 3
+    group_y = 4
+    offset_z = -1
+
+
 def read_file(fn):
     if is_zipfile(fn):
-        pattern = re.compile(r'^(.*/)?(\d+)/(\d+)/(\d+)\.(png|jpe?g)$', re.IGNORECASE)
+        fmt = None
         with ZipFile(fn) as zf:
             for info in zf.infolist():
-                if not info.is_dir() and (match := pattern.match(info.filename)):
-                    z = int(match.group(2))
-                    x = int(match.group(3))
-                    y = int(match.group(4))
+                if info.is_dir():
+                    continue
+                filename = info.filename.replace('\\', '/')  # Fix wrong separator issues
+                if fmt is None:
+                    for candidate in FileFormat.registry:
+                       if candidate.pattern.match(filename):
+                           fmt = candidate
+                           break
+                    else:
+                        continue
+                if tile := fmt.get_tile(filename):
+                    z, x, y = tile
                     data = zf.read(info)
                     yield z, x, y, data
         return
