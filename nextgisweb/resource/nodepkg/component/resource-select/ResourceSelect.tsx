@@ -9,6 +9,9 @@ import { useAbortController } from "@nextgisweb/pyramid/hook/useAbortController"
 import { showResourcePicker } from "../resource-picker";
 import { renderResourceCls } from "../resource-picker/util/renderResourceCls";
 
+import type { SelectValue } from "../resource-picker/type";
+import type { ResourceSelectProps } from "./type";
+
 import "./ResourceSelect.less";
 
 export const ResourceSelect = ({
@@ -16,8 +19,8 @@ export const ResourceSelect = ({
     onChange,
     pickerOptions,
     ...selectOptions
-}) => {
-    const pickerModal = useRef();
+}: ResourceSelectProps) => {
+    const pickerModal = useRef<ReturnType<typeof showResourcePicker>>();
 
     const { makeSignal, abort } = useAbortController();
     const [value_, setValue_] = useState(value);
@@ -48,7 +51,7 @@ export const ResourceSelect = ({
     }, [value_, abort, makeSignal]);
 
     const onPick = useCallback(
-        (val) => {
+        (val: SelectValue) => {
             setValue_(val);
             setOpen(false);
             if (onChange) {
@@ -86,12 +89,12 @@ export const ResourceSelect = ({
     const options = useMemo(() => {
         return resource
             ? [
-                {
-                    label: resource.resource.display_name,
-                    value: resource.resource.id,
-                    cls: resource.resource.cls,
-                },
-            ]
+                  {
+                      label: resource.resource.display_name,
+                      value: resource.resource.id,
+                      cls: resource.resource.cls,
+                  },
+              ]
             : [];
     }, [resource]);
 
