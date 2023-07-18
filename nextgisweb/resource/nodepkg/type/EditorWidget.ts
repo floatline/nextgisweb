@@ -12,7 +12,7 @@ export interface ActiveOnOptions {
 }
 
 interface EditorWidgetOptions {
-    title: string;
+    title?: string;
     activateOn?: ActiveOnOptions;
     order?: number;
 }
