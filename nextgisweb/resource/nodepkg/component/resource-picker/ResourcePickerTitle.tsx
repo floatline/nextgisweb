@@ -1,5 +1,3 @@
-import { PropTypes } from "prop-types";
-
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 
@@ -10,16 +8,18 @@ import SearchIcon from "@material-icons/svg/search";
 import SyncIcon from "@material-icons/svg/sync";
 
 import { Button, Col, Input, Row, Tooltip } from "@nextgisweb/gui/antd";
-import i18n from "@nextgisweb/pyramid/i18n";
 
-import { ResourcePickerBreadcrumb } from "./ResourcePickerBreadcrumb";
 import ResourcesFilter from "../../resources-filter";
+import { ResourcePickerBreadcrumb } from "./ResourcePickerBreadcrumb";
+import locale from "./locale";
 
-const returnToInitialGroupTitle = i18n.gettext("Go to initial group");
-const refreshGroupTitle = i18n.gettext("Refresh");
+import type { ResourcePickerTitleProps } from "./type";
+
+const returnToInitialGroupTitle = locale.returnToInitialGroupTitleText;
+const refreshGroupTitle = locale.refreshGroupTitleText;
 
 export const ResourcePickerTitle = observer(
-    ({ resourceStore, onClose, showClose }) => {
+    ({ resourceStore, onClose, showClose }: ResourcePickerTitleProps) => {
         const { initialParentId, parentId, allowMoveInside } = resourceStore;
 
         const [searchMode, setSearchMode] = useState(false);
@@ -109,9 +109,3 @@ export const ResourcePickerTitle = observer(
         );
     }
 );
-
-ResourcePickerTitle.propTypes = {
-    showClose: PropTypes.bool,
-    resourceStore: PropTypes.object,
-    onClose: PropTypes.func,
-};

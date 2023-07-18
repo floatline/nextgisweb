@@ -1,6 +1,10 @@
-import type { ResourcePermission, ResourceClass, ResourceInterface } from '../type/Resource';
+import type {
+    ResourcePermission,
+    ResourceClass,
+    ResourceInterface,
+} from "../../type/Resource";
 
-export type OnNewGroupType = ((resource) => void);
+export type OnNewGroupType = (resource) => void;
 
 export interface ResourcePickerStoreOptions {
     multiple: boolean;
