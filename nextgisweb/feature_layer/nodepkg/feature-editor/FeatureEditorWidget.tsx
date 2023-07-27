@@ -62,6 +62,9 @@ export const FeatureEditorWidget = observer(
                     return (
                         <>
                             <span>{newEditorWidget.label}</span>
+                            {widgetStore.counter && (
+                                <span>({widgetStore.counter})</span>
+                            )}
                             <span>
                                 <DirtyMark />
                             </span>

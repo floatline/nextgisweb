@@ -113,6 +113,8 @@ export class FeatureEditorStore {
                     extensions,
                 },
             });
+            // To update initial feature value
+            this._initialize();
             message.success(saveSuccessMsg);
         } finally {
             runInAction(() => {
