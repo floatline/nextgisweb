@@ -1,17 +1,13 @@
-export type WidgetValue<T> = null | T;
+import type { FeatureEditorStore } from "../feature-editor/FeatureEditorStore";
 
 export interface EditorStoreConstructorOptions {
-    resourceId: number;
-    featureId: number;
+    parentStore: FeatureEditorStore;
 }
 
 export interface EditorStore<V = unknown> {
-    value: WidgetValue<V>;
+    value: V;
 
-    resourceId: number;
-    featureId: number;
-
-    load: (value: WidgetValue<V>) => void;
+    load: (value: V) => void;
 
     isValid?: boolean;
 }

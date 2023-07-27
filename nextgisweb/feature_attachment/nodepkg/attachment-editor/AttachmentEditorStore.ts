@@ -5,7 +5,7 @@ import { findAttachmentIndex } from "./util/findAttachmentIndex";
 import type {
     EditorStoreConstructorOptions,
     EditorStore as IEditorStore,
-    WidgetValue,
+    ExtensionValue,
 } from "@nextgisweb/feature-layer/type";
 
 import type {
@@ -14,21 +14,23 @@ import type {
 } from "@nextgisweb/file-upload/file-uploader/type";
 import type { DataSource, FileMetaToUpload } from "./type";
 
-class AttachmentEditorStore implements IEditorStore<DataSource[]> {
-    value: WidgetValue<DataSource[]> = null;
+class AttachmentEditorStore
+    implements IEditorStore<ExtensionValue<DataSource[]>>
+{
+    value: ExtensionValue<DataSource[]> = null;
 
     featureId: number;
     resourceId: number;
 
-    constructor({ featureId, resourceId }: EditorStoreConstructorOptions) {
-        this.featureId = featureId;
-        this.resourceId = resourceId;
+    constructor({ parentStore }: EditorStoreConstructorOptions) {
+        this.featureId = parentStore.featureId;
+        this.resourceId = parentStore.resourceId;
         makeAutoObservable(this, { featureId: false, resourceId: false });
     }
 
-    load(value: WidgetValue<DataSource[]>) {
+    load = (value: ExtensionValue<DataSource[]>) => {
         this.value = value;
-    }
+    };
 
     append = (value: UploaderMeta[]) => {
         const newValue = [...(this.value || [])];

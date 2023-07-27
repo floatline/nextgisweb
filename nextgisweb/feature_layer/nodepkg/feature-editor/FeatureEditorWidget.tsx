@@ -1,4 +1,4 @@
-import { Suspense, useState, useEffect, lazy } from "react";
+import { Suspense, useState, useEffect, lazy, useCallback } from "react";
 
 import { Tabs } from "@nextgisweb/gui/antd";
 import i18n from "@nextgisweb/pyramid/i18n";
@@ -8,6 +8,7 @@ import { SaveButton } from "@nextgisweb/gui/component/SaveButton";
 import { ActionToolbar } from "@nextgisweb/gui/action-toolbar";
 
 import { FeatureEditorStore } from "./FeatureEditorStore";
+import editorWidgetRegister from "../attribute-editor";
 
 import type { EditorWidgetRegister } from "../type";
 import type { FeatureEditorWidgetProps } from "./type";
@@ -16,11 +17,8 @@ import "./FeatureEditorWidget.less";
 
 type TabProps = Parameters<typeof Tabs>[0];
 
-const AttributesForm = lazy(() => import("./AttributesForm"));
-
 const mLoading = i18n.gettext("Loading...");
 const saveText = i18n.gettext("Save");
-const attributesTabText = i18n.gettext("Attributes");
 
 export const FeatureEditorWidget = ({
     resourceId,
@@ -32,53 +30,54 @@ export const FeatureEditorWidget = ({
 
     const [items, setItems] = useState<TabProps["items"]>([]);
 
+    const registerEditorWidget = useCallback(
+        (key: string, newEditorWidget: EditorWidgetRegister) => {
+            const widgetStore = new newEditorWidget.store({
+                parentStore: store,
+            });
+
+            const Widget = lazy(async () => await newEditorWidget.component());
+            const newWidget = {
+                key,
+                label: newEditorWidget.label,
+                children: (
+                    <Suspense fallback={mLoading}>
+                        <Widget store={widgetStore}></Widget>
+                    </Suspense>
+                ),
+            };
+            setItems((old) => [...old, newWidget]);
+            return { widgetStore };
+        },
+        [store]
+    );
+
     useEffect(() => {
         const loadWidgets = async () => {
-            const items_: TabProps["items"] = [
-                {
-                    key: "attributes",
-                    label: attributesTabText,
-                    children: (
-                        <Suspense fallback={mLoading}>
-                            <AttributesForm store={store}></AttributesForm>,
-                        </Suspense>
-                    ),
-                },
-            ];
-
             for (const key in settings.editor_widget) {
                 const mid = settings.editor_widget[key];
                 try {
                     const widgetResource = (await entrypoint(mid))
                         .default as EditorWidgetRegister;
-
-                    const widgetStore = new widgetResource.store({
-                        resourceId,
-                        featureId,
-                    });
-                    store.addExtensionStore(key, widgetStore);
-
-                    const Widget = lazy(
-                        async () => await widgetResource.component()
-                    );
-                    items_.push({
+                    const { widgetStore } = registerEditorWidget(
                         key,
-                        label: widgetResource.label,
-                        children: (
-                            <Suspense fallback="loading...">
-                                <Widget store={widgetStore}></Widget>
-                            </Suspense>
-                        ),
-                    });
+                        widgetResource
+                    );
+                    store.addExtensionStore(key, widgetStore);
                 } catch (er) {
                     console.error(er);
                 }
             }
-
-            setItems(items_);
         };
+
+        const { widgetStore } = registerEditorWidget(
+            "attributes",
+            editorWidgetRegister
+        );
+        store.attachAttributeStore(widgetStore);
+
         loadWidgets();
-    }, [resourceId, featureId, store]);
+    }, [store, registerEditorWidget]);
 
     return (
         <div className="ngw-feature-layer-editor">
