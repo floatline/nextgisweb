@@ -14,9 +14,7 @@ export interface EditorStoreOptions {
 export interface EditorStore<V = unknown> {
     identity?: string;
 
-    // uploading: boolean;
-
-    value: V;
+    uploading: boolean;
 
     load: (value: V) => unknown;
 
