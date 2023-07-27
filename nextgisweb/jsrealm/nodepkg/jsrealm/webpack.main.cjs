@@ -234,6 +234,14 @@ const webpackAssetsManifestPlugin = new WebpackAssetsManifest({
     },
 });
 
+const devPlugins = [];
+
+// Decrease build  and watch performance, but really useful
+// if (config.debug) {
+//     const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+//     devPlugins.push(...[new ForkTsCheckerWebpackPlugin()]);
+// }
+
 /** @type {import("webpack").Configuration} */
 const webpackConfig = defaults("main", {
     entry: () => ({ ...staticEntries, ...dynamicEntries() }),
@@ -320,6 +328,7 @@ const webpackConfig = defaults("main", {
                 },
             ],
         }),
+        ...devPlugins,
         webpackAssetsManifestPlugin,
     ],
     output: {
