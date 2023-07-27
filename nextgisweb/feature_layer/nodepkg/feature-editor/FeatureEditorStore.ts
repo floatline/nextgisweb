@@ -22,7 +22,7 @@ type NgwAttributes = Record<string, unknown>;
 /** This attributes for using in web */
 type AppAttributes = Record<string, unknown>;
 
-const saveSuccessMsg = i18n.gettext("The feature is saved.");
+const saveSuccessMsg = i18n.gettext("Feature saved");
 
 export class FeatureEditorStore {
     resourceId: number;
