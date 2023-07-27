@@ -55,7 +55,7 @@ class AttributeEditorStore implements EditorStore<NgwAttributeValue> {
 
     reset = () => {
         this.load(this._initValue);
-    }
+    };
 
     setValues = (values: AppAttributes = {}) => {
         runInAction(() => {
