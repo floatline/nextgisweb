@@ -1,4 +1,5 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, toJS } from "mobx";
+import isEqual from "lodash-es/isEqual";
 
 import { findAttachmentIndex } from "./util/findAttachmentIndex";
 
@@ -22,14 +23,37 @@ class AttachmentEditorStore
     featureId: number;
     resourceId: number;
 
+    _initValue: ExtensionValue<DataSource[]> = null;
+
     constructor({ parentStore }: EditorStoreConstructorOptions) {
         this.featureId = parentStore.featureId;
         this.resourceId = parentStore.resourceId;
         makeAutoObservable(this, { featureId: false, resourceId: false });
     }
 
+    get counter() {
+        return this.value && String(this.value.length);
+    }
+
+    get dirty() {
+        if (this.value && this._initValue) {
+            if (this.value.length !== this._initValue.length) {
+                return true;
+            }
+            return !this._initValue.every((val, index) =>
+                isEqual(val, this.value[index])
+            );
+        }
+        return false;
+    }
+
     load = (value: ExtensionValue<DataSource[]>) => {
         this.value = value;
+        this._initValue = toJS(value);
+    };
+
+    reset = () => {
+        this.load(this._initValue);
     };
 
     append = (value: UploaderMeta[]) => {

@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 
 import { Button, Tooltip } from "@nextgisweb/gui/antd";
 import { LoadingWrapper } from "@nextgisweb/gui/component";
@@ -49,7 +49,7 @@ const setNullTitle = gettext("Set field value to NULL (No data)");
 
 const AttributeEditor = observer(
     ({ store }: EditorWidgetProps<NgwAttributeValue, AttributeEditorStore>) => {
-        const { fields, attributes, value, setValues } = store;
+        const { fields, attributes, value, setValues, _parentStore } = store;
         const [size] = useState<SizeType>("small");
         const form = Form.useForm()[0];
 
@@ -61,6 +61,10 @@ const AttributeEditor = observer(
             [form, setValues]
         );
 
+        useEffect(() => {
+            form.setFieldsValue(attributes);
+        }, [form, attributes]);
+
         const formFields = useMemo(() => {
             return fields.map((field) => {
                 const widgetAlias = ngwTypeAliases[field.datatype];
@@ -70,7 +74,10 @@ const AttributeEditor = observer(
                     name: field.keyname,
                     label: field.display_name,
                     widget,
-                    inputProps,
+                    inputProps: {
+                        readOnly: _parentStore.saving,
+                        ...inputProps,
+                    },
                     append: (
                         <Tooltip title={setNullTitle} placement="right">
                             <Button
@@ -92,7 +99,7 @@ const AttributeEditor = observer(
 
                 return props;
             });
-        }, [fields, attributes, setNullForField]);
+        }, [fields, attributes, setNullForField, _parentStore.saving]);
 
         if (!value) {
             return <LoadingWrapper />;

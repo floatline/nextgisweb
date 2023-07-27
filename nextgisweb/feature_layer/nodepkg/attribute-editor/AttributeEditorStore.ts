@@ -1,4 +1,5 @@
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, runInAction, toJS } from "mobx";
+import isEqual from "lodash-es/isEqual";
 
 import { parseNgwAttribute, formatNgwAttribute } from "../util/ngwAttributes";
 
@@ -14,15 +15,18 @@ import type { AppAttributes, NgwAttributeValue } from "./type";
 class AttributeEditorStore implements EditorStore<NgwAttributeValue> {
     value: NgwAttributeValue | null = null;
 
+    _initValue: NgwAttributeValue | null = null;
+
     readonly _parentStore: FeatureEditorStore;
 
     constructor({ parentStore }: EditorStoreConstructorOptions) {
         this._parentStore = parentStore;
-        makeAutoObservable(this, { _parentStore: false });
+        makeAutoObservable(this, { _parentStore: false, _initValue: false });
     }
 
     load(value: NgwAttributeValue) {
-        this.value = value;
+        this.value = { ...value };
+        this._initValue = toJS(value);
     }
 
     /** Feature field values formatted for web */
@@ -40,6 +44,17 @@ class AttributeEditorStore implements EditorStore<NgwAttributeValue> {
 
     get fields(): FeatureLayerField[] {
         return this._parentStore.fields;
+    }
+
+    get dirty(): boolean {
+        if (this.value && this._initValue) {
+            return !isEqual(this.value, this._initValue);
+        }
+        return false;
+    }
+
+    reset = () => {
+        this.load(this._initValue);
     }
 
     setValues = (values: AppAttributes = {}) => {
