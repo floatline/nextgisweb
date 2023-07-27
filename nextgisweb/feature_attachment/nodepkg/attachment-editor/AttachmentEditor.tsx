@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useFileUploader } from "@nextgisweb/file-upload";
 import { FileUploaderButton } from "@nextgisweb/file-upload/file-uploader";
@@ -17,7 +17,7 @@ import type { UploaderMeta } from "@nextgisweb/file-upload/file-uploader/type";
 import type AttachmentEditorStore from "./AttachmentEditorStore";
 import type { DataSource } from "./type";
 
-import "./AttachmentEditor.css";
+import "./AttachmentEditor.less";
 
 function isFileImage(file: File) {
     return file && file["type"].split("/")[0] === "image";
@@ -26,9 +26,6 @@ function isFileImage(file: File) {
 const AttachmentEditor = observer(
     ({ store }: EditorWidgetProps<DataSource[], AttachmentEditorStore>) => {
         const multiple = true;
-
-        const wrapperElement = useRef();
-        const toolbarElement = useRef();
 
         const onChange = useCallback(
             (meta_: UploaderMeta) => {
@@ -159,16 +156,10 @@ const AttachmentEditor = observer(
         );
 
         return (
-            <div ref={wrapperElement}>
-                <ActionToolbar
-                    ref={toolbarElement}
-                    style={{ padding: "10px" }}
-                    actions={actions}
-                    actionProps={{}}
-                ></ActionToolbar>
-                <Upload {...props} className="drag-to-table-uploader">
+            <div className="ngw-feature-attachment-editor">
+                <ActionToolbar actions={actions} actionProps={{}} />
+                <Upload {...props}>
                     <Table
-                        parentHeight
                         rowKey={(record: DataSource) =>
                             "file_upload" in record
                                 ? record.file_upload.id
@@ -176,8 +167,9 @@ const AttachmentEditor = observer(
                         }
                         dataSource={store.value}
                         columns={columns}
-                        // scroll={{ y: scrollY }}
-                    ></Table>
+                        parentHeight
+                        size="small"
+                    />
                 </Upload>
             </div>
         );

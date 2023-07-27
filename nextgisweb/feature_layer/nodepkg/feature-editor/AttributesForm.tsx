@@ -95,17 +95,19 @@ const AttributesForm = observer(({ store }: AttributesFormProps) => {
     }
 
     return (
-        <FieldsForm
-            form={form}
-            size={size}
-            fields={formFields}
-            initialValues={values}
-            onChange={async (v) => {
-                if (await v.isValid()) {
-                    setValues(v.value);
-                }
-            }}
-        ></FieldsForm>
+        <div className="ngw-gui-antd-tab-padding">
+            <FieldsForm
+                form={form}
+                size={size}
+                fields={formFields}
+                initialValues={values}
+                onChange={async (v) => {
+                    if (await v.isValid()) {
+                        setValues(v.value);
+                    }
+                }}
+            />
+        </div>
     );
 });
 

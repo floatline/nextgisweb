@@ -5,11 +5,14 @@ import i18n from "@nextgisweb/pyramid/i18n";
 import settings from "@nextgisweb/pyramid/settings!";
 import entrypoint from "@nextgisweb/jsrealm/entrypoint";
 import { SaveButton } from "@nextgisweb/gui/component/SaveButton";
+import { ActionToolbar } from "@nextgisweb/gui/action-toolbar";
 
 import { FeatureEditorStore } from "./FeatureEditorStore";
 
 import type { EditorWidgetRegister } from "../type";
 import type { FeatureEditorWidgetProps } from "./type";
+
+import "./FeatureEditorWidget.less";
 
 type TabProps = Parameters<typeof Tabs>[0];
 
@@ -78,13 +81,19 @@ export const FeatureEditorWidget = ({
     }, [resourceId, featureId, store]);
 
     return (
-        <Tabs
-            items={items}
-            tabBarExtraContent={
-                <SaveButton loading={store.saving} onClick={store.save}>
-                    {saveText}
-                </SaveButton>
-            }
-        />
+        <div className="ngw-feature-layer-editor">
+            <Tabs type="card" items={items} parentHeight />
+            <ActionToolbar
+                actions={[
+                    <SaveButton
+                        key="save"
+                        loading={store.saving}
+                        onClick={store.save}
+                    >
+                        {saveText}
+                    </SaveButton>,
+                ]}
+            />
+        </div>
     );
 };

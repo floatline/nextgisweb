@@ -6,12 +6,7 @@ import type { EditorWidgetProps } from "@nextgisweb/feature-layer/feature-editor
 
 const DescriptionEditor = observer(({ store }: EditorWidgetProps<string>) => {
     return (
-        <TextEditor
-            fullHeight={false}
-            value={store.value}
-            onChange={store.load}
-            border={false}
-        />
+        <TextEditor value={store.value} onChange={store.load} border={false} />
     );
 });
 
