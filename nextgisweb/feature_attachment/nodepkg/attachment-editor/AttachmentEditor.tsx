@@ -83,7 +83,7 @@ const AttachmentEditor = observer(
                     key: "preview",
                     width: "100px",
                     render: (_, row: DataSource) => {
-                        if ("is_image" in row) {
+                        if ("is_image" in row && row.is_image) {
                             const url = routeURL("feature_attachment.image", {
                                 id: store.resourceId,
                                 fid: store.featureId,
@@ -93,12 +93,11 @@ const AttachmentEditor = observer(
                                 <Image
                                     width={80}
                                     src={`${url}?size=80x80`}
-                                    preview={{
-                                        src: url,
-                                    }}
+                                    preview={{ src: url }}
                                 />
                             );
                         } else if (
+                            "_file" in row &&
                             row._file instanceof File &&
                             isFileImage(row._file)
                         ) {
