@@ -60,10 +60,16 @@ export {
     Upload,
 } from "antd";
 
-export { default as Calendar} from "./calendar";
-export { default as ConfigProvider} from "./config-provider";
+export { default as Calendar } from "./calendar";
+export { default as ConfigProvider } from "./config-provider";
 export { default as DatePicker } from "./date-picker";
 export { default as TimePicker } from "./time-picker";
 export { default as RangePicker } from "./range-date-time-picker";
 export { default as Table } from "./table";
 export { default as Tabs } from "./tabs";
+
+export type AntParams<T extends React.FC> = Parameters<T>[0];
+export type AntParam<
+    T extends React.FC,
+    K extends keyof AntParams<T>,
+> = AntParams<T>[K];
