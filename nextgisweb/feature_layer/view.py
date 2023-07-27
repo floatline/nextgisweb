@@ -80,7 +80,7 @@ def feature_update(request):
     return dict(
         obj=request.context,
         entrypoint="@nextgisweb/feature-layer/feature-editor",
-        props=dict(id=request.context.id, feature_id=feature_id),
+        props=dict(resourceId=request.context.id, featureId=feature_id),
         title=_("Feature #%d") % feature_id,
         maxheight=True)
 

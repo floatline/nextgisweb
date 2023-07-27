@@ -15,15 +15,16 @@ type TabProps = Parameters<typeof Tabs>[0];
 
 const AttributesForm = lazy(() => import("./AttributesForm"));
 
+const mLoading = i18n.gettext("Loading...");
 const saveText = i18n.gettext("Save");
 const attributesTabText = i18n.gettext("Attributes");
 
 export const FeatureEditorWidget = ({
-    feature_id,
-    id,
+    resourceId,
+    featureId,
 }: FeatureEditorWidgetProps) => {
     const [store] = useState(
-        () => new FeatureEditorStore({ resourceId: id, featureId: feature_id })
+        () => new FeatureEditorStore({ resourceId, featureId })
     );
 
     const [items, setItems] = useState<TabProps["items"]>([]);
@@ -35,7 +36,7 @@ export const FeatureEditorWidget = ({
                     key: "attributes",
                     label: attributesTabText,
                     children: (
-                        <Suspense fallback="loading...">
+                        <Suspense fallback={mLoading}>
                             <AttributesForm store={store}></AttributesForm>,
                         </Suspense>
                     ),
@@ -49,8 +50,8 @@ export const FeatureEditorWidget = ({
                         .default as EditorWidgetRegister;
 
                     const widgetStore = new widgetResource.store({
-                        featureId: feature_id,
-                        resourceId: id,
+                        resourceId,
+                        featureId,
                     });
                     store.addExtensionStore(key, widgetStore);
 
@@ -74,7 +75,7 @@ export const FeatureEditorWidget = ({
             setItems(items_);
         };
         loadWidgets();
-    }, [feature_id, id, store]);
+    }, [resourceId, featureId, store]);
 
     return (
         <Tabs

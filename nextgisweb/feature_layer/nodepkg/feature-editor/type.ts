@@ -6,9 +6,8 @@ export interface AttributesFormProps {
 }
 
 export interface FeatureEditorWidgetProps {
-    /** Resource id */
-    id: number;
-    feature_id: number;
+    resourceId: number;
+    featureId: number;
 }
 
 export interface FeatureEditorStoreOptions {
