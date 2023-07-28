@@ -6,8 +6,7 @@ define([
     "ngw-webmap/plugin/_PluginBase",
     "dojo/dom-construct",
     "@nextgisweb/pyramid/i18n!",
-    "openlayers/ol",
-    "../contrib/proj4"
+    "openlayers/ol"
 ], function (
     declare,
     array,
@@ -16,22 +15,100 @@ define([
     _PluginBase,
     domConstruct,
     i18n,
-    ol,
-    proj4
+    ol
 ) {
+    const a = 6378137;
+    const b = 6356752.3142;
+    const e = Math.sqrt(1 - (b ** 2) / (a ** 2));
+
+    function toEPSG3395fromEPSG4326(input, output, dimension) {
+      const length = input.length;
+      dimension = dimension > 1 ? dimension : 2;
+
+      if (output === undefined) {
+        output = dimension > 2 ? input.slice() : new Array(length);
+      }
+
+      for (let i = 0; i < length; i += dimension) {
+        output[i] = (a * (input[i] * Math.PI)) / 180;
+        const phi = (input[i + 1] * Math.PI) / 180;
+        const c = Math.pow((1 - e * Math.sin(phi)) / (1 + e * Math.sin(phi)), e / 2);
+        output[i + 1] = a * Math.log(Math.tan(Math.PI / 4 + phi / 2) * c);
+      }
+
+      return output;
+    }
+
+    function toEPSG4326fromEPSG3395(input, output, dimension) {
+      const length = input.length;
+      dimension = dimension > 1 ? dimension : 2;
+
+      if (output === undefined) {
+        output = dimension > 2 ? input.slice() : new Array(length);
+      }
+
+      const tolerance = 1e-12;
+      const maxIterations = 100;
+
+      for (let i = 0; i < length; i += dimension) {
+        output[i] = (180 * input[i]) / (Math.PI * a);
+
+        let iter = 0;
+        let delta;
+        let ts = Math.exp(-input[i + 1] / a);
+        let phi = Math.PI / 2 - 2 * Math.atan(ts);
+
+        do {
+          const esinphi = e * Math.sin(phi);
+          const newPhi = Math.PI / 2 - 2 * Math.atan(ts * Math.pow((1 - esinphi) / (1 + esinphi), e / 2));
+          delta = Math.abs(newPhi - phi);
+          phi = newPhi;
+          iter++;
+        } while (delta > tolerance && iter < maxIterations);
+
+        output[i + 1] = (180 * phi) / Math.PI;
+      }
+
+      return output;
+    }
+
+    function toEPSG3395fromEPSG3857(input, output, dimension) {
+        const transform = ol.proj.getTransform('EPSG:3857', 'EPSG:4326');
+        const transformed = transform(input, output, dimension);
+        return toEPSG3395fromEPSG4326(transformed, output, dimension);
+    }
+
+    function toEPSG3857fromEPSG3395(input, output, dimension) {
+        const transform = ol.proj.getTransform('EPSG:4326', 'EPSG:3857');
+        const transformed = toEPSG4326fromEPSG3395(input, output, dimension);
+        return transform(transformed, output, dimension);
+    }
+
     return declare([_PluginBase], {
 
         constructor: function () {
             var wmplugin = this.display.config.webmapPlugin[this.identity];
             var settings = this.display.clientSettings;
 
-            // Yandex.Maps
-            proj4.defs("EPSG:3395","+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs");
-            ol.proj.proj4.register(proj4);
-            ol.proj.get('EPSG:3395').setExtent([-20037508.342789244,
-                                                -20037508.342789244,
-                                                 20037508.342789244,
-                                                 20037508.342789244]);
+            ol.proj.addProjection(
+                new ol.proj.Projection({
+                    code: 'EPSG:3395',
+                    units: 'm',
+                    extent: [
+                        -20037508.342789244,
+                        -20037508.342789244,
+                         20037508.342789244,
+                         20037508.342789244
+                    ]
+                })
+            );
+
+            ol.proj.addCoordinateTransforms(
+                'EPSG:3857',
+                'EPSG:3395',
+                toEPSG3395fromEPSG3857,
+                toEPSG3857fromEPSG3395
+            );
 
             if (wmplugin.basemaps.length) {
                 settings.basemaps = [];
