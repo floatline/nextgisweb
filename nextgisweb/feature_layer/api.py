@@ -79,13 +79,15 @@ def _extensions(extensions, layer):
 class ExportOptions:
     __slots__ = (
         'driver', 'dsco', 'lco', 'srs', 'intersects_geom', 'intersects_srs',
-        'fields', 'fid_field', 'use_display_name', 'ilike',
+        'fields', 'fid_field', 'use_display_name', 'ilike', 'distance_geom',
+        'distance_srs'
     )
 
     def __init__(
         self, *, format=None, encoding=None, srs=None,
         intersects=None, intersects_srs=None, ilike=None,
-        fields=None, fid='', display_name='false', **params,
+        fields=None, fid='', display_name='false', distance_geom=None,
+        distance_srs=None,  **params,
     ):
         if format is None:
             raise ValidationError(message=_("Output format is not provided."))
@@ -163,6 +165,9 @@ def export(resource, options, filepath):
         else:
             intersects_geom = options.intersects_geom
         query.intersects(intersects_geom)
+
+
+                
 
     if options.ilike is not None and IFeatureQueryIlike.providedBy(query):
         query.ilike(options.ilike)
@@ -746,6 +751,23 @@ def apply_intersect_filter(query, request, resource):
         query.intersects(geom)
 
 
+def order_by_distance(query, request, resource, order):
+    order = ['asc', 'desc'][order == '-']
+    # move this to another funciton
+    if 'distance_geom' in request.GET:
+        distance_geom = Geometry.from_wkt(request.GET.get('distance_geom'))
+        if (distance_srs := request.GET.get(
+        'distance_srs')) is not None and distance_srs != resource.srs_id:
+            distance_srs = SRS.filter_by(id=int(distance_srs)).one()
+            transformer = Transformer(distance_srs.wkt, resource.srs.wkt)
+            try:
+                distance_geom = transformer.transform(distance_geom)
+            except ValueError:
+                raise ValidationError(message=_(
+                    "Failed to reproject 'distance' geometry"))
+            
+    query.order_by_distance(order, distance_geom)
+
 def cget(resource, request) -> JSONType:
     request.resource_permission(PERM_READ)
 
@@ -776,7 +798,9 @@ def cget(resource, request) -> JSONType:
     if order_by is not None:
         for order_def in list(order_by.split(',')):
             order, colname = re.match(r'^(\-|\+|%2B)?(.*)$', order_def).groups()
-            if colname is not None:
+            if colname == "distance":
+                order_by_distance(query, request, resource, order)
+            elif colname is not None:
                 order = ['asc', 'desc'][order == '-']
                 order_by_.append([order, colname])
 

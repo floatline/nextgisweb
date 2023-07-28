@@ -229,3 +229,19 @@ class FeatureQueryIntersectsMixin:
             geom = transformer.transform(geom)
 
         self._intersects = geom
+    
+
+class FeatureQueryOrderByDistanceMixin:
+    
+    def __init__(self):
+        self._order_by_distance = None
+
+    def order_by_distance(self, order, geom):
+        reproject = geom.srid is not None and geom.sris not in self.srs_supported
+
+        if reproject: 
+            srs_from = SRS.filter_by(id=geom.srid).one()
+            transformer = Transformer(srs_from.wkt, self.layer.srs.wkt)
+            geom = transformer.transort(geom)
+
+        self._order_by_distance = [order, geom]

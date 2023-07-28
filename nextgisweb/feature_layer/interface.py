@@ -177,6 +177,10 @@ class IFeatureQueryOrderBy(IFeatureQuery):
     def order_by(self, *args):
         """ Set sort order """
 
+class IFeatureQueryOrderByDistance(IFeatureQuery):
+    def order_by_distance(self, order, geom):
+        """ Sort by distance from object """
+
 
 class IFeatureQueryLike(IFeatureQuery):
 

@@ -14,6 +14,7 @@ from nextgisweb.lib.geometry import Geometry
 from nextgisweb.feature_layer import (
     Feature,
     FeatureQueryIntersectsMixin,
+    FeatureQueryOrderByDistanceMixin,
     FeatureSet,
     IFeatureQuery,
     IFeatureQueryClipByBox,
@@ -23,6 +24,7 @@ from nextgisweb.feature_layer import (
     IFeatureQueryIntersects,
     IFeatureQueryLike,
     IFeatureQueryOrderBy,
+    IFeatureQueryOrderByDistance,
     IFeatureQuerySimplify,
 )
 from nextgisweb.spatial_ref_sys import SRS
@@ -38,13 +40,17 @@ from .table_info import TableInfo
     IFeatureQueryIlike,
     IFeatureQueryIntersects,
     IFeatureQueryOrderBy,
+    IFeatureQueryOrderByDistance,
     IFeatureQueryClipByBox,
     IFeatureQuerySimplify,
 )
-class FeatureQueryBase(FeatureQueryIntersectsMixin):
+class FeatureQueryBase(FeatureQueryIntersectsMixin, FeatureQueryOrderByDistanceMixin):
 
     def __init__(self):
-        super().__init__()
+        #super().__init__()
+        FeatureQueryIntersectsMixin.__init__(self)
+        FeatureQueryOrderByDistanceMixin.__init__(self)
+        print(FeatureQueryBase.mro(), flush=True)
 
         self._srs = None
         self._geom = None
@@ -317,6 +323,24 @@ class FeatureQueryBase(FeatureQueryIntersectsMixin):
                 field = tableinfo.find_field(keyname=colname)
                 order_criterion.append(dict(asc=db.asc, desc=db.desc)[order](
                     table.columns[field.key]))
+                
+        if self._order_by_distance:
+            order, geometry = self._order_by_distance
+            reproject = geometry.srid is not None \
+                and geometry.srid != self.layer.srs_id
+            
+            dist_srs = SRS.filter_by(id=geometry.srid).one() \
+                if reproject else self.layer.srs
+        
+            geometry_ = func.st_geomfromtext(geometry.wkt)
+            # is it needed?
+            if dist_srs.is_geographic:
+                bound_geom = func.st_makeenvelope(-180, -89.9, 180, 89.9)
+                geometry_ = func.st_intersection(bound_geom, int_geom)
+            geometry_ = func.st_setsrid(geometry_, self.layer.srs_id)
+            
+            order_criterion.append(dict(asc=db.asc, desc=db.desc)[order](func.st_distance(geometry_, geomcol)))
+                
         order_criterion.append(db.asc(idcol))
 
         class QueryFeatureSet(FeatureSet):

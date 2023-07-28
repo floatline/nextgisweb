@@ -18,9 +18,16 @@ from .interface import (
     IFeatureQueryIntersects,
     IFeatureQueryLike,
     IFeatureQueryOrderBy,
+    IFeatureQueryOrderByDistance,
     IFeatureQuerySimplify,
     IFieldEditableFeatureLayer,
     IGeometryEditableFeatureLayer,
     IWritableFeatureLayer,
 )
-from .model import FIELD_FORBIDDEN_NAME, FeatureQueryIntersectsMixin, LayerField, LayerFieldsMixin
+from .model import (
+    FIELD_FORBIDDEN_NAME,
+    FeatureQueryIntersectsMixin,
+    FeatureQueryOrderByDistanceMixin,
+    LayerField,
+    LayerFieldsMixin
+) 
