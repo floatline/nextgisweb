@@ -50,7 +50,6 @@ class FeatureQueryBase(FeatureQueryIntersectsMixin, FeatureQueryOrderByDistanceM
         #super().__init__()
         FeatureQueryIntersectsMixin.__init__(self)
         FeatureQueryOrderByDistanceMixin.__init__(self)
-        print(FeatureQueryBase.mro(), flush=True)
 
         self._srs = None
         self._geom = None
